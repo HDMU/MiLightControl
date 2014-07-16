@@ -5,7 +5,6 @@ from Screens.Screen import Screen
 from Components.Label import Label
 from Components.Sources.List import List
 from Components.config import *
-import commands
 from Components.ConfigList import ConfigList, ConfigListScreen
 from Components.ActionMap import ActionMap
 config.plugins.milight = ConfigSubsection()
@@ -20,6 +19,8 @@ config.plugins.milight.zone1brightness = ConfigSlider(default=27, limits=(2, 27)
 config.plugins.milight.zone2brightness = ConfigSlider(default=27, limits=(2, 27))
 config.plugins.milight.zone3brightness = ConfigSlider(default=27, limits=(2, 27))
 config.plugins.milight.zone4brightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.ip = ConfigIP(default=[192,168,2,106])
+config.plugins.milight.port = ConfigInteger(default=8899, limits=(1, 9999))
 class HDMU_MilightControl(Screen, ConfigListScreen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
@@ -40,9 +41,8 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		self["red"] = Label(_("All zones off"))
 		self["yellow"] = Label(_("All zones min brightness"))
 		self["blue"] = Label(_("All zones max brightness"))
-		IP = commands.getoutput("cat /usr/lib/enigma2/python/Plugins/Extensions/MiLightControl/config | cut -d ':' -f1")
-		PORT = commands.getoutput("cat /usr/lib/enigma2/python/Plugins/Extensions/MiLightControl/config | cut -d ':' -f2")
-		self.led_connection = wifileds.limitlessled.connect(IP, int(PORT))
+		self.ip = '%d.%d.%d.%d' % tuple(config.plugins.milight.ip.value)
+		self.led_connection = wifileds.limitlessled.connect(self.ip, int(config.plugins.milight.port.value))
 		self.list = [ ]
 		self.onChangedEntry = [ ]
 		ConfigListScreen.__init__(self, self.list, session = session, on_change = self.changedEntry)
@@ -67,6 +67,8 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		self.close()
 	def createsetup(self):
 		list = [
+			getConfigListEntry(_('IP'), config.plugins.milight.ip),
+			getConfigListEntry(_('Port'), config.plugins.milight.port),
 			getConfigListEntry(_("All Zone Color:"), config.plugins.milight.zoneall),
 			getConfigListEntry(_("Zone 1 Color:"), config.plugins.milight.zone1),
 			getConfigListEntry(_("Zone 2 Color:"), config.plugins.milight.zone2),
@@ -80,6 +82,8 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		]
 		self["config"].list = list
 		self["config"].setList(list)
+		self.ip = '%d.%d.%d.%d' % tuple(config.plugins.milight.ip.value)
+		self.led_connection = wifileds.limitlessled.connect(self.ip, int(config.plugins.milight.port.value))
 	def keyLeft(self):
 		self["config"].handleKey(KEY_LEFT)
 		self.update()
@@ -87,6 +91,7 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		self["config"].handleKey(KEY_RIGHT)
 		self.update()
 	def update(self):
+		self.createsetup()
 		if self["config"].getCurrent()[1] == config.plugins.milight.brightness:
 			self.led_connection.rgbw.set_brightness(config.plugins.milight.brightness.value)
 		elif self["config"].getCurrent()[1] == config.plugins.milight.zone1brightness:
