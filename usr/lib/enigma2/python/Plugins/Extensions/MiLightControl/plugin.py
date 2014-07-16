@@ -26,7 +26,7 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		Screen.__init__(self, session)
 		skin = """<screen name="HDMU_MilightControl" position="280,75" size="720,605" title="Milight Control" flags="wfNoBorder" backgroundColor="#ff000000">
 				<eLabel position="0,0" zPosition="-3" size="720,605" backgroundColor="black" />
-				<widget name="config" zPosition="2" position="253,215" size="400,300" scrollbarMode="showOnDemand" foregroundColor="white" backgroundColor="black" transparent="1" font="Regular;20"/>
+				<widget name="config" zPosition="2" position="253,215" size="400,300" scrollbarMode="showOnDemand" foregroundColor="white" backgroundColor="black" transparent="1"/>
 				<ePixmap position="250,530" zPosition="2" size="35,25" pixmap="skin_default/buttons/key_red.png" alphatest="blend"/>
 				<ePixmap position="250,560" zPosition="2" size="35,25" pixmap="skin_default/buttons/key_green.png" alphatest="blend"/>
 				<ePixmap position="450,530" zPosition="2" size="35,25" pixmap="skin_default/buttons/key_yellow.png" alphatest="blend"/>
