@@ -145,4 +145,4 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 def menu(session, **kwargs):
 	session.open(HDMU_MilightControl)
 def Plugins(**kwargs):
-	return [PluginDescriptor(name = "MiLight Control", description = "Controll your MiLight", where = [PluginDescriptor.WHERE_PLUGINMENU], fnc = menu),]
+	return [PluginDescriptor(name = "MiLight Control", description = "Control your MiLight", where = [PluginDescriptor.WHERE_PLUGINMENU], fnc = menu),]
