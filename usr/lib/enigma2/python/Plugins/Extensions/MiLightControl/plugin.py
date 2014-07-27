@@ -1,3 +1,4 @@
+import colorsys
 import wifileds
 from Plugins.Plugin import PluginDescriptor
 from Components.PluginComponent import plugins
@@ -7,17 +8,30 @@ from Components.Sources.List import List
 from Components.config import *
 from Components.ConfigList import ConfigList, ConfigListScreen
 from Components.ActionMap import ActionMap
+from Tools.Directories import fileExists
+from os import system, remove
 config.plugins.milight = ConfigSubsection()
-colors = [('off',_("off")),('white',_("white")),('violet',_('violet')),('royal_blue',_('royal_blue')),('baby_blue',_('baby_blue')),('aqua',_('aqua')),('mint',_('mint')),('seafoam_green',_('seafoam_green')),('green',_('green')),('lime_green',_('lime_green')),('yellow',_('yellow')),('yellow_orange',_('yellow_orange')),('orange',_('orange')),('red',_('red')),('pink',_('pink')),('fusia',_('fusia')),('lilac',_('lilac')),('lavendar',_('lavendar'))]
-config.plugins.milight.zone1 = ConfigSelection(colors)
-config.plugins.milight.zone2 = ConfigSelection(colors)
-config.plugins.milight.zone3 = ConfigSelection(colors)
-config.plugins.milight.zone4 = ConfigSelection(colors)
-config.plugins.milight.zoneall = ConfigSelection(colors)
-config.plugins.milight.brightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.boblight = ConfigYesNo(default=False)
+config.plugins.milight.select = ConfigSelection(default = "ip", choices = [("ip", _("IP&other config")),("allzones", _("All zones")),("zone1", _("Zone 1")),("zone2", _("Zone 2")),("zone3", _("Zone 3")),("zone4", _("Zone 4"))])
+config.plugins.milight.zoneall_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
+config.plugins.milight.zoneall_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
+config.plugins.milight.zoneall_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
+config.plugins.milight.zoneallbrightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.zone1_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
+config.plugins.milight.zone1_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
+config.plugins.milight.zone1_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
 config.plugins.milight.zone1brightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.zone2_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
+config.plugins.milight.zone2_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
+config.plugins.milight.zone2_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
 config.plugins.milight.zone2brightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.zone3_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
+config.plugins.milight.zone3_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
+config.plugins.milight.zone3_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
 config.plugins.milight.zone3brightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.zone4_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
+config.plugins.milight.zone4_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
+config.plugins.milight.zone4_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
 config.plugins.milight.zone4brightness = ConfigSlider(default=27, limits=(2, 27))
 config.plugins.milight.ip = ConfigIP(default=[192,168,2,106])
 config.plugins.milight.port = ConfigInteger(default=8899, limits=(1, 9999))
@@ -66,34 +80,96 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 			x[1].cancel()
 		self.close()
 	def createsetup(self):
-		list = [
-			getConfigListEntry(_('IP'), config.plugins.milight.ip),
-			getConfigListEntry(_('Port'), config.plugins.milight.port),
-			getConfigListEntry(_("All Zone Color:"), config.plugins.milight.zoneall),
-			getConfigListEntry(_("Zone 1 Color:"), config.plugins.milight.zone1),
-			getConfigListEntry(_("Zone 2 Color:"), config.plugins.milight.zone2),
-			getConfigListEntry(_("Zone 3 Color:"), config.plugins.milight.zone3),
-			getConfigListEntry(_("Zone 4 Color:"), config.plugins.milight.zone4),
-			getConfigListEntry(_("All Zone Brightness:"), config.plugins.milight.brightness),
-			getConfigListEntry(_("Zone 1 Brightness:"), config.plugins.milight.zone1brightness),
-			getConfigListEntry(_("Zone 2 Brightness:"), config.plugins.milight.zone2brightness),
-			getConfigListEntry(_("Zone 3 Brightness:"), config.plugins.milight.zone3brightness),
-			getConfigListEntry(_("Zone 4 Brightness:"), config.plugins.milight.zone4brightness),
-		]
+		if config.plugins.milight.select.value == "ip":
+			list = [
+				getConfigListEntry(_('Select config:'), config.plugins.milight.select),
+				getConfigListEntry(_('IP:'), config.plugins.milight.ip),
+				getConfigListEntry(_('Port:'), config.plugins.milight.port),
+				getConfigListEntry(_('Enable Boblight:'), config.plugins.milight.boblight),
+			]
+		elif config.plugins.milight.select.value == "allzones":
+			list = [
+				getConfigListEntry(_('Select config:'), config.plugins.milight.select),
+				getConfigListEntry(_("All Zone red color:"), config.plugins.milight.zoneall_color_r),
+				getConfigListEntry(_("All Zone green color:"), config.plugins.milight.zoneall_color_g),
+				getConfigListEntry(_("All Zone blue color:"), config.plugins.milight.zoneall_color_b),
+				getConfigListEntry(_("All Zone Brightness:"), config.plugins.milight.zoneallbrightness),
+			]
+		elif config.plugins.milight.select.value == "zone1":
+			list = [
+				getConfigListEntry(_('Select config:'), config.plugins.milight.select),
+				getConfigListEntry(_("Zone 1 red color:"), config.plugins.milight.zone1_color_r),
+				getConfigListEntry(_("Zone 1 green color:"), config.plugins.milight.zone1_color_g),
+				getConfigListEntry(_("Zone 1 blue color:"), config.plugins.milight.zone1_color_b),
+				getConfigListEntry(_("Zone 1 Brightness:"), config.plugins.milight.zone1brightness),
+			]
+		elif config.plugins.milight.select.value == "zone2":
+			list = [
+				getConfigListEntry(_('Select config:'), config.plugins.milight.select),
+				getConfigListEntry(_("Zone 2 red color:"), config.plugins.milight.zone2_color_r),
+				getConfigListEntry(_("Zone 2 green color:"), config.plugins.milight.zone2_color_g),
+				getConfigListEntry(_("Zone 2 blue color:"), config.plugins.milight.zone2_color_b),
+				getConfigListEntry(_("Zone 2 Brightness:"), config.plugins.milight.zone2brightness),
+			]
+		elif config.plugins.milight.select.value == "zone3":
+			list = [
+				getConfigListEntry(_('Select config:'), config.plugins.milight.select),
+				getConfigListEntry(_("Zone 3 red color:"), config.plugins.milight.zone3_color_r),
+				getConfigListEntry(_("Zone 3 green color:"), config.plugins.milight.zone3_color_g),
+				getConfigListEntry(_("Zone 3 blue color:"), config.plugins.milight.zone3_color_b),
+				getConfigListEntry(_("Zone 3 Brightness:"), config.plugins.milight.zone3brightness),
+			]
+		elif config.plugins.milight.select.value == "zone4":
+			list = [
+				getConfigListEntry(_('Select config:'), config.plugins.milight.select),
+				getConfigListEntry(_("Zone 4 red color:"), config.plugins.milight.zone4_color_r),
+				getConfigListEntry(_("Zone 4 green color:"), config.plugins.milight.zone4_color_g),
+				getConfigListEntry(_("Zone 4 blue color:"), config.plugins.milight.zone4_color_b),
+				getConfigListEntry(_("Zone 4 Brightness:"), config.plugins.milight.zone4brightness),
+			]
 		self["config"].list = list
 		self["config"].setList(list)
 		self.ip = '%d.%d.%d.%d' % tuple(config.plugins.milight.ip.value)
 		self.led_connection = wifileds.limitlessled.connect(self.ip, int(config.plugins.milight.port.value))
 	def keyLeft(self):
 		self["config"].handleKey(KEY_LEFT)
-		self.update()
+		if self["config"].getCurrent()[1] == config.plugins.milight.select:
+			self.createsetup()
+		elif self["config"].getCurrent()[1] == config.plugins.milight.boblight:
+			if config.plugins.milight.boblight.value is True:
+				if fileExists("/etc/.milight.lock"):
+					return
+				else:
+					system("touch /etc/.milight.lock")
+			else:
+				if fileExists("/etc/.milight.lock"):
+					remove("/etc/.milight.lock")
+		elif self["config"].getCurrent()[1] in (config.plugins.milight.ip, config.plugins.milight.port):
+			self.ip = '%d.%d.%d.%d' % tuple(config.plugins.milight.ip.value)
+			self.led_connection = wifileds.limitlessled.connect(self.ip, int(config.plugins.milight.port.value))
+		else:
+			self.update()
 	def keyRight(self):
 		self["config"].handleKey(KEY_RIGHT)
-		self.update()
+		if self["config"].getCurrent()[1] == config.plugins.milight.select:
+			self.createsetup()
+		elif self["config"].getCurrent()[1] == config.plugins.milight.boblight:
+			if config.plugins.milight.boblight.value is True:
+				if fileExists("/etc/.milight.lock"):
+					return
+				else:
+					system("touch /etc/.milight.lock")
+			else:
+				if fileExists("/etc/.milight.lock"):
+					remove("/etc/.milight.lock")
+		elif self["config"].getCurrent()[1] in (config.plugins.milight.ip, config.plugins.milight.port):
+			self.ip = '%d.%d.%d.%d' % tuple(config.plugins.milight.ip.value)
+			self.led_connection = wifileds.limitlessled.connect(self.ip, int(config.plugins.milight.port.value))
+		else:
+			self.update()
 	def update(self):
-		self.createsetup()
-		if self["config"].getCurrent()[1] == config.plugins.milight.brightness:
-			self.led_connection.rgbw.set_brightness(config.plugins.milight.brightness.value)
+		if self["config"].getCurrent()[1] == config.plugins.milight.zoneallbrightness:
+			self.led_connection.rgbw.set_brightness(config.plugins.milight.zoneallbrightness.value)
 		elif self["config"].getCurrent()[1] == config.plugins.milight.zone1brightness:
 			self.led_connection.rgbw.set_brightness(config.plugins.milight.zone1brightness.value, 1)
 		elif self["config"].getCurrent()[1] == config.plugins.milight.zone2brightness:
@@ -102,38 +178,73 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 			self.led_connection.rgbw.set_brightness(config.plugins.milight.zone3brightness.value, 3)
 		elif self["config"].getCurrent()[1] == config.plugins.milight.zone4brightness:
 			self.led_connection.rgbw.set_brightness(config.plugins.milight.zone4brightness.value, 4)
-		elif self["config"].getCurrent()[1] == config.plugins.milight.zoneall:
-			if config.plugins.milight.zoneall.value == "white":
-				self.led_connection.rgbw.white()
-			elif config.plugins.milight.zoneall.value == "off":
-				self.led_connection.rgbw.all_off()
-			else:
-				self.led_connection.rgbw.set_color(config.plugins.milight.zoneall.value)
 		else:
-			if config.plugins.milight.zone1.value == "white":
-				self.led_connection.rgbw.white(1)
-			elif config.plugins.milight.zone1.value == "off":
-				self.led_connection.rgbw.zone_off(1)
-			else:
-				self.led_connection.rgbw.set_color(config.plugins.milight.zone1.value, 1)
-			if config.plugins.milight.zone2.value == "white":
-				self.led_connection.rgbw.white(2)
-			elif config.plugins.milight.zone2.value == "off":
-				self.led_connection.rgbw.zone_off(2)
-			else:
-				self.led_connection.rgbw.set_color(config.plugins.milight.zone2.value, 2)
-			if config.plugins.milight.zone3.value == "white":
-				self.led_connection.rgbw.white(3)
-			elif config.plugins.milight.zone3.value == "off":
-				self.led_connection.rgbw.zone_off(3)
-			else:
-				self.led_connection.rgbw.set_color(config.plugins.milight.zone3.value, 3)
-			if config.plugins.milight.zone4.value == "white":
-				self.led_connection.rgbw.white(4)
-			elif config.plugins.milight.zone4.value == "off":
-				self.led_connection.rgbw.zone_off(4)
-			else:
-				self.led_connection.rgbw.set_color(config.plugins.milight.zone4.value, 4)
+			if self["config"].getCurrent()[1] in (config.plugins.milight.zoneall_color_r, config.plugins.milight.zoneall_color_g, config.plugins.milight.zoneall_color_b):
+				r = float(config.plugins.milight.zoneall_color_r.value)
+				g = float(config.plugins.milight.zoneall_color_g.value)
+				b = float(config.plugins.milight.zoneall_color_b.value)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone1_color_r, config.plugins.milight.zone1_color_g, config.plugins.milight.zone1_color_b):
+				r = float(config.plugins.milight.zone1_color_r.value)
+				g = float(config.plugins.milight.zone1_color_g.value)
+				b = float(config.plugins.milight.zone1_color_b.value)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone2_color_r, config.plugins.milight.zone2_color_g, config.plugins.milight.zone2_color_b):
+				r = float(config.plugins.milight.zone2_color_r.value)
+				g = float(config.plugins.milight.zone2_color_g.value)
+				b = float(config.plugins.milight.zone2_color_b.value)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone3_color_r, config.plugins.milight.zone3_color_g, config.plugins.milight.zone3_color_b):
+				r = float(config.plugins.milight.zone3_color_r.value)
+				g = float(config.plugins.milight.zone3_color_g.value)
+				b = float(config.plugins.milight.zone3_color_b.value)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone4_color_r, config.plugins.milight.zone4_color_g, config.plugins.milight.zone4_color_b):
+				r = float(config.plugins.milight.zone4_color_r.value)
+				g = float(config.plugins.milight.zone4_color_g.value)
+				b = float(config.plugins.milight.zone4_color_b.value)
+			h, l, s = colorsys.rgb_to_hls(r/255.0,g/255.0,b/255.0)
+			h=int(int(h * 360) + 120)
+			if h>=360:
+				h = h - 360
+			h=abs(h-360)
+			h = int((h / 360.0) * 255.0)
+			if self["config"].getCurrent()[1] in (config.plugins.milight.zoneall_color_r, config.plugins.milight.zoneall_color_g, config.plugins.milight.zoneall_color_b):
+				if r == 255 and g == 255 and b == 255:
+					self.led_connection.rgbw.white()
+					self.led_connection.rgbw.set_brightness(config.plugins.milight.zoneallbrightness.value)
+				elif r == 0 and g == 0 and b == 0:
+					self.led_connection.rgbw.all_off()
+				else:
+					self.led_connection.rgbw.set_color_hex(chr(h))
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone1_color_r, config.plugins.milight.zone1_color_g, config.plugins.milight.zone1_color_b):
+				if r == 255 and g == 255 and b == 255:
+					self.led_connection.rgbw.white(1)
+					self.led_connection.rgbw.set_brightness(config.plugins.milight.zone1brightness.value, 1)
+				elif r == 0 and g == 0 and b == 0:
+					self.led_connection.rgbw.zone_off(1)
+				else:
+					self.led_connection.rgbw.set_color_hex(chr(h), 1)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone2_color_r, config.plugins.milight.zone2_color_g, config.plugins.milight.zone2_color_b):
+				if r == 255 and g == 255 and b == 255:
+					self.led_connection.rgbw.white(2)
+					self.led_connection.rgbw.set_brightness(config.plugins.milight.zone1brightness.value, 2)
+				elif r == 0 and g == 0 and b == 0:
+					self.led_connection.rgbw.zone_off(2)
+				else:
+					self.led_connection.rgbw.set_color_hex(chr(h), 2)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone3_color_r, config.plugins.milight.zone3_color_g, config.plugins.milight.zone3_color_b):
+				if r == 255 and g == 255 and b == 255:
+					self.led_connection.rgbw.white(3)
+					self.led_connection.rgbw.set_brightness(config.plugins.milight.zone1brightness.value, 3)
+				elif r == 0 and g == 0 and b == 0:
+					self.led_connection.rgbw.zone_off(3)
+				else:
+					self.led_connection.rgbw.set_color_hex(chr(h), 3)
+			elif self["config"].getCurrent()[1] in (config.plugins.milight.zone4_color_r, config.plugins.milight.zone4_color_g, config.plugins.milight.zone4_color_b):
+				if r == 255 and g == 255 and b == 255:
+					self.led_connection.rgbw.white(4)
+					self.led_connection.rgbw.set_brightness(config.plugins.milight.zone1brightness.value, 4)
+				elif r == 0 and g == 0 and b == 0:
+					self.led_connection.rgbw.zone_off(4)
+				else:
+					self.led_connection.rgbw.set_color_hex(chr(h), 4)
 	def alloff(self):
 		self.led_connection.rgbw.all_off()
 	def allon(self):
@@ -150,4 +261,4 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 def menu(session, **kwargs):
 	session.open(HDMU_MilightControl)
 def Plugins(**kwargs):
-	return [PluginDescriptor(name = "MiLight Control", description = "Control your MiLight", where = [PluginDescriptor.WHERE_PLUGINMENU], fnc = menu),]
+	return [PluginDescriptor(name = "MiLight Control", description = "Controll your MiLight", where = [PluginDescriptor.WHERE_PLUGINMENU], fnc = menu),]
