@@ -44,7 +44,7 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		skin = """<screen name="HDMU_MilightControl" position="center,center" size="720,605" title="Milight Control" flags="wfNoBorder" backgroundColor="#000">
 				<eLabel position="0,0" zPosition="-3" size="720,605" backgroundColor="black" />
 				<eLabel position="50,50" zPosition="-1" size="620,505" backgroundColor="black" />
-				<widget name="config" zPosition="2" position="center,center" size="400,300" scrollbarMode="showOnDemand" foregroundColor="white" backgroundColor="black" transparent="1"/>
+				<widget name="config" zPosition="2" position="160,151" size="400,300" scrollbarMode="showOnDemand" foregroundColor="white" backgroundColor="black" transparent="1"/>
 				<ePixmap position="250,530" zPosition="2" size="35,25" pixmap="skin_default/buttons/key_red.png" alphatest="blend"/>
 				<ePixmap position="250,571" zPosition="2" size="35,25" pixmap="skin_default/buttons/key_green.png" alphatest="blend"/>
 				<ePixmap position="450,530" zPosition="2" size="35,25" pixmap="skin_default/buttons/key_yellow.png" alphatest="blend"/>
