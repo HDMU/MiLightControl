@@ -13,13 +13,15 @@ from os import system, remove
 from Components.Sources.CanvasSource import CanvasSource
 def RGB(r,g,b):
 	return (r<<16)|(g<<8)|b
-config.plugins.milight = ConfigSubsection()
+partych = [('off',_('off')),('1',_('static white color')),('2',_('white color (gradual changes)')),('3',_('all colors (gradual changes)')),('4',_('red/green/blue (gradual changes)')),('5',_('7 colors (jump changes)')),('6',_('3 colors (jump changes)')),('7',_('red/green (jump changes)')),('8',_('red/blue (jump changes)')),('9',_('blue/green (jump changes)')),('10',_('white color (frequently blinks)')),('11',_('white color (glitters)')),('12',_('red color (frequently blinks)')),('13',_('red color (glitters)')),('14',_('green color (frequently blinks)')),('15',_('green color (glitters)')),('16',_('blue color (frequently blinks)')),('17',_('blue color (glitters)')),('18',_('yellow color (frequently blinks)')),('19',_('yellow color (glitters)')),('20',_('circulation mode'))]
+config.plugins.milight = ConfigSubsection()		
 config.plugins.milight.boblight = ConfigYesNo(default=False)
 config.plugins.milight.select = ConfigSelection(default = "ip", choices = [("ip", _("IP&other config")),("allzones", _("All zones")),("zone1", _("Zone 1")),("zone2", _("Zone 2")),("zone3", _("Zone 3")),("zone4", _("Zone 4"))])
 config.plugins.milight.zoneall_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
 config.plugins.milight.zoneall_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
 config.plugins.milight.zoneall_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
 config.plugins.milight.zoneallbrightness = ConfigSlider(default=27, limits=(2, 27))
+config.plugins.milight.zoneall_partymode = ConfigSelection(partych)
 config.plugins.milight.zone1_color_r = ConfigSlider(default=255, increment=5, limits=(0,255))
 config.plugins.milight.zone1_color_g = ConfigSlider(default=25, increment=5, limits=(0,255))
 config.plugins.milight.zone1_color_b = ConfigSlider(default=2, increment=5, limits=(0,255))
@@ -135,6 +137,7 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 				getConfigListEntry(_("All Zone green color:"), config.plugins.milight.zoneall_color_g),
 				getConfigListEntry(_("All Zone blue color:"), config.plugins.milight.zoneall_color_b),
 				getConfigListEntry(_("All Zone Brightness:"), config.plugins.milight.zoneallbrightness),
+				getConfigListEntry(_("All Zone Partymode:"), config.plugins.milight.zoneall_partymode),
 			]
 		elif config.plugins.milight.select.value == "zone1":
 			list = [
@@ -237,7 +240,12 @@ class HDMU_MilightControl(Screen, ConfigListScreen):
 		self["Canvas"].fill(0, 0, 720, 605, RGB(r,g,b))
 		self["Canvas"].flush()
 	def update(self):
-		if self["config"].getCurrent()[1] == config.plugins.milight.zoneallbrightness:
+		if self["config"].getCurrent()[1] == config.plugins.milight.zoneall_partymode:
+			if config.plugins.milight.zoneall_partymode.value == "off":
+				self.led_connection.rgbw.white()
+			else:
+				self.led_connection.rgbw.party_mode(int(config.plugins.milight.zoneall_partymode.value))
+		elif self["config"].getCurrent()[1] == config.plugins.milight.zoneallbrightness:
 			self.led_connection.rgbw.set_brightness(config.plugins.milight.zoneallbrightness.value)
 		elif self["config"].getCurrent()[1] == config.plugins.milight.zone1brightness:
 			self.led_connection.rgbw.set_brightness(config.plugins.milight.zone1brightness.value, 1)
